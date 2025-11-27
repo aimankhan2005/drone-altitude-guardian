@@ -22,6 +22,7 @@ export class DroneEnvironment {
   private readonly SAFE_MIN = 4;
   private readonly SAFE_MAX = 6;
   private history: EnvironmentState[] = [];
+  private windIntensity: number = 1.0; // 0.0 to 1.0
 
   constructor(initialAltitude: number = 5) {
     this.altitude = Math.max(this.MIN_ALTITUDE, Math.min(this.MAX_ALTITUDE, initialAltitude));
@@ -29,13 +30,36 @@ export class DroneEnvironment {
   }
 
   /**
+   * Set wind intensity (0.0 = no wind, 1.0 = full wind)
+   */
+  setWindIntensity(intensity: number): void {
+    this.windIntensity = Math.max(0, Math.min(1, intensity));
+  }
+
+  /**
+   * Get current wind intensity
+   */
+  getWindIntensity(): number {
+    return this.windIntensity;
+  }
+
+  /**
    * Generate random wind disturbance
-   * Returns -1, 0, or +1 with equal probability
+   * Returns -1, 0, or +1 with probability based on wind intensity
+   * Lower intensity = more likely to have no wind (0)
    */
   private generateWind(): number {
     const random = Math.random();
-    if (random < 0.33) return -1;
-    if (random < 0.66) return 0;
+    
+    // Scale probabilities based on wind intensity
+    // At 0% intensity: 100% chance of 0
+    // At 50% intensity: 50% chance of 0, 25% each for -1 and +1
+    // At 100% intensity: 33% each for -1, 0, +1
+    const noWindProbability = (1 - this.windIntensity) * 0.67 + 0.33;
+    const negWindProbability = (noWindProbability + (1 - noWindProbability) / 2);
+    
+    if (random < (1 - noWindProbability) / 2) return -1;
+    if (random < negWindProbability) return 0;
     return 1;
   }
 
