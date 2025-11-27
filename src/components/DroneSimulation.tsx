@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Play, Pause, RotateCcw, Wind, TrendingUp, Activity } from "lucide-react";
+import { Slider } from "@/components/ui/slider";
 import { DroneEnvironment } from "@/lib/agents/DroneEnvironment";
 import { ReflexAgent } from "@/lib/agents/ReflexAgent";
 import { ModelBasedAgent } from "@/lib/agents/ModelBasedAgent";
@@ -33,6 +34,7 @@ export const DroneSimulation = () => {
   const [step, setStep] = useState(0);
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [chartData, setChartData] = useState<any[]>([]);
+  const [windIntensity, setWindIntensity] = useState(100);
   
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -113,10 +115,18 @@ export const DroneSimulation = () => {
     };
   }, [isRunning, step, currentAgent]);
 
+  // Update wind intensity
+  const handleWindIntensityChange = (value: number[]) => {
+    const intensity = value[0] / 100;
+    setWindIntensity(value[0]);
+    environment.setWindIntensity(intensity);
+  };
+
   // Reset simulation
   const handleReset = () => {
     setIsRunning(false);
     environment.reset(5);
+    environment.setWindIntensity(windIntensity / 100);
     reflexAgent.reset();
     modelBasedAgent.reset();
     setStep(0);
@@ -171,6 +181,30 @@ export const DroneSimulation = () => {
                     {currentAgent === "reflex" ? "Rule-Based" : "Predictive"}
                   </Badge>
                 </Button>
+              </div>
+
+              {/* Wind Intensity Slider */}
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <label className="text-sm font-inter font-medium text-foreground flex items-center gap-2">
+                    <Wind className="w-4 h-4 text-primary" />
+                    Wind Intensity
+                  </label>
+                  <span className="text-sm font-rajdhani font-bold text-primary">
+                    {windIntensity}%
+                  </span>
+                </div>
+                <Slider
+                  value={[windIntensity]}
+                  onValueChange={handleWindIntensityChange}
+                  min={0}
+                  max={100}
+                  step={5}
+                  className="w-full"
+                />
+                <p className="text-xs text-muted-foreground font-inter">
+                  {windIntensity === 0 ? "No wind disturbances" : windIntensity < 50 ? "Light wind" : windIntensity < 80 ? "Moderate wind" : "Strong wind"}
+                </p>
               </div>
 
               {/* Control Buttons */}
